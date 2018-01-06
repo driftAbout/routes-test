@@ -6,6 +6,10 @@ var app = app || {};
 
   const view = {};
 
+  view.init_index = () => {
+    $('.container').hide();
+  };
+
   view.init_hello = () => {
     $('.container').hide();
     $('#hello').show();
@@ -22,5 +26,7 @@ var app = app || {};
   };
 
   module.view = view;
+
+  $('h2').on('click', () => linkRoute('/'));
 
 })(app);
