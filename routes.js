@@ -5,7 +5,10 @@ var linkRoutes = new Map();
 function linkRoute(...args){
   if(!args.length) return linkRoute_event_handlers();
   let [route, callback] = args;
-  if(!callback) return linkRoutes.get(route)();
+  if(!callback){
+    history.pushState( {}, null, route)
+    return linkRoutes.get(route)();
+  } 
   linkRoutes.set(route, callback);
 }
 
@@ -20,7 +23,7 @@ function linkRoute_event_handlers() {
   document.body.addEventListener('click', function(e){
     if (e.target.localName !== 'a' || !linkRoutes.has(e.target.pathname)) return;
     e.preventDefault();
-    history.pushState( {}, null, e.target.pathname);
+   // history.pushState( {}, null, e.target.pathname);
     linkRoute(e.target.pathname);
   });
 
