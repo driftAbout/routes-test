@@ -20,7 +20,8 @@ var app = app || {};
     $('#goodbye').show();
   };
 
-  view.init_saywhat = () => {
+  view.init_saywhat = (ctx) => {
+    console.log(ctx)
     $('.container').hide();
     $('#saywhat').show();
   };
