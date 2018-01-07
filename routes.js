@@ -62,6 +62,7 @@ var app = app || {};
   }
 
   module.linkRoute = linkRoute;
+  module.linkRoutes = linkRoutes;
 
 })(app);
 
@@ -71,4 +72,26 @@ Route('/', app.view.init_index);
 Route('/hello', app.view.init_hello);
 Route('/goodbye', app.view.init_goodbye);
 Route('/saywhat', (ctx) => app.view.init_saywhat(ctx));
+Route('/thisword/:word', (ctx) => console.log(ctx.params.word));
+Route('/thisword/thatword/:words', (ctx) => console.log(ctx.params.words));
 Route();
+
+//console.log(app.linkRoutes.keys().map(path => path.match(/([^\/]+)/g)))
+console.log([...app.linkRoutes.keys()].map(path => path.match(/([^\/]+)/g)));
+//let paths_parts = [...app.linkRoutes.keys()].filter(val => val !== '/' ).map(path => path.match(/([^\/]+)/g)).filter(arr=> arr.length > 1);
+let paths_parts = [...app.linkRoutes.keys()].filter(val => val !== '/' ).map(path => { return {route: path, matches: path.match(/([^\/]+)/g)}; }).filter(obj=> obj.matches.length > 1);
+console.log('paths_parts:', paths_parts);
+//let this_path = ['/thisword/yo'].map(path => path.match(/([^\/]+)/g))
+//console.log(this_path);
+let regX = paths_parts.map(path_arr => { 
+  return { route: path_arr.route, 
+    exp: path_arr.matches.reduce((acc, cur) =>  { return (cur.charAt(0) !== ':') ? `${acc}/${cur}` : `${acc}/[^\\/]+`;}, '')};
+});
+console.log('regX', regX);
+let route = regX.filter(val => {
+  let rge = new RegExp(val.exp, 'g');
+  console.log('match', '/thisword/yo'.match(rge));
+  return '/thisword/yo'.match(rge);
+});
+
+console.log('route', route[0].route);
