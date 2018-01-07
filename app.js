@@ -21,13 +21,13 @@ var app = app || {};
   };
 
   view.init_saywhat = (ctx) => {
-    console.log(ctx)
     $('.container').hide();
     $('#saywhat').show();
   };
 
   module.view = view;
 
-  $('h2').on('click', () => linkRoute('/'));
+  // $('h2').on('click', () => linkRoute('/'));
+  $('h2').on('click', () => Route('/'));
 
 })(app);
