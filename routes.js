@@ -10,38 +10,46 @@ var app = app || {};
     if(!args.length) return linkRoute_event_handlers();
     let [route, callback] = args;
     if(!callback){
-      let ctx = {route: route};
-      if (window.location.pathname !== route) history.pushState( ctx, null, route); 
-      if (linkRoutes.has(route)) return linkRoutes.get(route)(ctx);
-      let {callback, params} = regexGet(route);
-      ctx.params = params;
+      let {callback, ctx} = getRoute(route);
+      if(!callback) return;
+      if (window.location.pathname !== route) history.pushState( ctx, null, route);
       return callback(ctx);
     }
-    if (!route.match(/:[^/]+/g)) return linkRoutes.set(route, callback);
-    linkRoutes.set(route, {regex: route.replace(/:[^/]+/g, '[^/]+') , path_array: route.split(/\/:?/).filter(val=>val), callback: callback}); 
+    setRoute.call(route, callback);
   }
 
-  const regexGet = (route) => {
-    for (let value of linkRoutes.values() ){
-      let routeMatch = new RegExp(value.regex, 'g');
-      if (value.regex && route.match(routeMatch)) {
-        let callback = value.callback;
-        let params = route.split(/\//).filter(val=>val).reduce((acc, cur, i) => {  
-          if (cur !== value.path_array[i]) acc[value.path_array[i]] = cur;
-          return acc;
-        }, {} );
-        return {callback: callback, params: params};
-      }
-    }
+  const getRoute = (route) => {
+    let ctx = {route: route};
+    if (linkRoutes.has(route)) return {callback: linkRoutes.get(route), ctx: ctx};
+    let {value, route_path_array} = searchRoutes(route);
+    if(!value) return {};
+    let callback = value.callback;
+    let params = route_path_array.reduce((acc, cur, i) => {
+      if (cur !== value.path_array[i]) acc[value.path_array[i]] = cur;
+      return acc;
+    }, {} );
+    ctx.params = params;
+    return {callback: callback, ctx: ctx};
   };
 
-  const regexHas = (route) => {
+  function setRoute(callback){
+    if (!this.match(/:[^/]+/g)) return linkRoutes.set(this, callback);
+    linkRoutes.set(this, {regex: this.replace(/:[^/]+/g, '[^/]+') , path_array: this.split(/\/:?/).filter(val=>val), callback: callback});
+  }
+
+  const hasRoute = (route) => {
     if (linkRoutes.has(route)) return true;
+    if (searchRoutes(route).value) return true;
+    return false;
+  };
+
+  const searchRoutes = (route) => {
     for (let value of linkRoutes.values() ){
       let routeMatch = new RegExp(value.regex, 'g');
-      if (value.regex && route.match(routeMatch)) return true;
+      let route_path_array = route.split(/\//).filter(val=>val);
+      if (value.regex && route.match(routeMatch) && route_path_array.length === value.path_array.length) return {value, route_path_array};
     }
-    return false;
+    return {};
   };
 
   function linkRoute_event_handlers() {
@@ -54,14 +62,14 @@ var app = app || {};
 
     /*********** <a> click event handler ***********/
     document.body.addEventListener('click', function(e){
-      if (e.target.localName !== 'a' && !regexHas(e.target.pathname)) return;
+      if (e.target.localName !== 'a' && !hasRoute(e.target.pathname)) return;
       e.preventDefault();
       linkRoute(e.target.attributes.href.value);
     });
 
     /*********** window load event handler ***********/
     window.addEventListener('load', function(e) {
-      if(regexHas(e.target.location.pathname) && e.target.location.pathname !== '/'){
+      if(hasRoute(e.target.location.pathname) && e.target.location.pathname !== '/'){
         return linkRoute(event.target.location.pathname);
       }
       if(e.target.location.pathname !== '/') return history.pushState( {}, null, '/');
@@ -70,7 +78,7 @@ var app = app || {};
   }
 
   module.linkRoute = linkRoute;
-  // module.linkRoutes = linkRoutes;
+  module.linkRoutes = linkRoutes;
 
 })(app);
 
