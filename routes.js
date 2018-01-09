@@ -21,9 +21,10 @@ var app = app || {};
   const getRoute = (route) => {
     let ctx = {route: route};
     if (linkRoutes.has(route)) return {callback: linkRoutes.get(route), ctx: ctx};
-    let {value, route_path_array} = searchRoutes(route);
+    let value = searchRoutes(route);
     if(!value) return {};
     let callback = value.callback;
+    let route_path_array = route.split(/\//).filter(val=>val);
     let params = route_path_array.reduce((acc, cur, i) => {
       if (cur !== value.path_array[i]) acc[value.path_array[i]] = cur;
       return acc;
@@ -39,17 +40,16 @@ var app = app || {};
 
   const hasRoute = (route) => {
     if (linkRoutes.has(route)) return true;
-    if (searchRoutes(route).value) return true;
+    if (searchRoutes(route)) return true;
     return false;
   };
 
   const searchRoutes = (route) => {
     for (let value of linkRoutes.values() ){
-      let routeMatch = new RegExp(value.regex, 'g');
-      let route_path_array = route.split(/\//).filter(val=>val);
-      if (value.regex && route.match(routeMatch) && route_path_array.length === value.path_array.length) return {value, route_path_array};
+      let routeMatch = new RegExp(value.regex + '$', 'g');
+      if (value.regex && route.match(routeMatch) ) return value;
     }
-    return {};
+    return false;
   };
 
   function linkRoute_event_handlers() {
