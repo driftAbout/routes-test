@@ -28,6 +28,6 @@ var app = app || {};
   module.view = view;
 
   // $('h2').on('click', () => linkRoute('/'));
-  $('h2').on('click', () => Route('/'));
+  $('h2').on('click', () => route('/'));
 
 })(app);
