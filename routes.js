@@ -4,8 +4,10 @@ var app = app || {};
 
 (function(module) {
 
+  //object to store route callbacks
   var linkRoutes = new Map();
 
+  // variable to store home path depending on dev or production environment
   var base;
 
   function linkRoute(...args){
@@ -140,7 +142,8 @@ var app = app || {};
 
 var route = app.linkRoute;
 
-route.base('http');
+//set the base if the project is served from git hub pages
+if (window.location.host.indexOf('github.io') !== -1) route.base('/book-list-client');
 
 route('/', app.view.init_index);
 route('/hello', app.view.init_hello);
