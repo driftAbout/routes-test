@@ -136,8 +136,7 @@ var app = app || {};
   }
 
   module.linkRoute = linkRoute;
-  module.linkRoutes = linkRoutes;
-
+ 
 })(app);
 
 var route = app.linkRoute;
