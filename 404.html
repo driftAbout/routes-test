@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale= 1.0">
+    <title>Roger and Kevin: Bookie</title>
+  </head>
+  <script>
+    //create a redirect to home for 404 issues
+    //For live-server on the command line, use live-server --entry-file=404.html
+    //When deploying on github pages use the repo name as home otherwise use /
+    let home = (window.location.host.indexOf('github.io') === -1) ? '/' : '/book-list-client';
+    window.location = home;
+  </script>
+</html>
