@@ -19,17 +19,19 @@ var app = app || {};
     if(!callback){
       //getRoute returns a function reference and object
       //if the route has parameters, the object will contain the parameter values
-      let {callback, ctx} = getRoute(route);
+      let {callback, ctx, historyOpt} = getRoute(route);
       //if a route was not found, do nothing
       if(!callback) return;
+      //the base is only needed for the url in the history state
+      let url = base ? `${base}${route}` : route;
       //if a route was found, set the history state
-      //if the route was called from the popstate event, don't set th3 history state again
-      if (window.location.pathname !== route) history.pushState( ctx, null, route);
+      //if the route was called from the popstate event, the pathname and route will be the same so don't set the history state again
+      if (window.location.pathname !== url && historyOpt) history.pushState( ctx, null, url);
       //invoke the callback function with the object as an argument
       return callback(ctx);
     }
     //if there were two arguments, route and callback, set the properties in the linkRoutes map object
-    setRoute.call([route, callback]);
+    setRoute.call(args);
   }
 
   linkRoute.base = function(link_base) {
@@ -41,7 +43,10 @@ var app = app || {};
     //even if the callback doesn't require an object, it is used with the history state
     let ctx = {route: route};
     //if the route does not have parameters, it will have a direct match accessible with standard Map methods
-    if (linkRoutes.has(route)) return {callback: linkRoutes.get(route), ctx: ctx};
+    if (linkRoutes.has(route)){
+      let {callback, historyOpt} = linkRoutes.get(route);
+      return {callback: callback, ctx: ctx, historyOpt: historyOpt};
+    }
     //if there was not a direct match, check the route with regex against routes with parameters
     let value = searchRoutes(route);
     //if no match was found, return an empty object
@@ -61,15 +66,16 @@ var app = app || {};
       return acc;
     }, {} );
     ctx.params = params;
-    return {callback: callback, ctx: ctx};
+    return {callback: callback, ctx: ctx, historyOpt: value.historyOpt};
   };
 
   function setRoute(){
     let [route, callback] = this;
+    let historyOpt = this.length === 2 ? true : this[2];
     //if the route does not contain a parameter, no /:something/, use the Map set method with the route as key and callback as value
-    if (!route.match(/:[^/]+/g)) return linkRoutes.set(route, callback);
+    if (!route.match(/:[^/]+/g)) return linkRoutes.set(route, {callback: callback, historyOpt: historyOpt});
     //if the route has a parameter, use the route as key and create a regex expression and array, for comparison for searching, as value
-    linkRoutes.set(route, {regex: route.replace(/:[^/]+/g, '[^/]+') , path_array: route.split(/\/:?/).filter(val=>val), callback: callback});
+    linkRoutes.set(route, {regex: route.replace(/:[^/]+/g, '[^/]+') , path_array: route.split(/\/:?/).filter(val=>val), callback: callback, historyOpt: historyOpt});
   }
 
   const hasRoute = (route) => {
@@ -113,10 +119,16 @@ var app = app || {};
     //if the page reloads and has been redirected to the home page, check the url to se if it matches
     //if it doesn't invoke the callback for that route
     window.addEventListener('load', function(e) {
-      if(hasRoute(e.target.location.pathname) && e.target.location.pathname !== '/'){
-        return linkRoute(event.target.location.pathname);
+      let referrerRoute = e.target.location.pathname;
+      if( e.target.referrer ){
+        referrerRoute = e.target.referrer.replace(e.target.baseURI, '/');
       }
-      if(e.target.location.pathname !== '/') return history.pushState( {}, null, '/');
+      if(hasRoute(referrerRoute) && referrerRoute !== '/'){
+        return linkRoute(referrerRoute);
+      }
+      //if the path is not the home path or a path saved as a route, then redirect to the home
+      let url = base ? `${base}/` : '/';
+      if(e.target.location.pathname !== '/') return history.pushState( {}, null, url);
     });
 
   }
