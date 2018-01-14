@@ -46,6 +46,7 @@ var app = app || {};
     //even if the callback doesn't require an object, it is used with the history state
     let ctx = {route: route};
     //if the route does not have parameters, it will have a direct match accessible with standard Map methods
+    //add ctx to the object returned from linkRoutes.get(route)
     if (linkRoutes.has(route)) return Object.assign(linkRoutes.get(route), {ctx: ctx});
     //if there was not a direct match, check the route with regex against routes with parameters
     let value = searchRoutes(route);
@@ -55,7 +56,7 @@ var app = app || {};
     let callback = value.callback;
     //if a match was found using regex, it means the route had parameters
     //the values of the parameters need to be extracted and added to the ctx object as key value pairs
-    //split the called route on "/" into an array
+    //split the called route on "/" into an array and remove any empty values
     let route_path_array = route.split(/\//).filter(val=>val);
     //use reduce to compare each part of the called route to the array of the stored route with parameters
     // called route: '/users/23' => ['users', 23]
@@ -71,6 +72,7 @@ var app = app || {};
 
   function setRoute(){
     let [route, callback] = this;
+    //historyOpt is true unless it is set to false
     let historyOpt = this.length === 2 ? true : this[2];
     //if the route does not contain a parameter, no /:something/, use the Map set method with the route as key and callback as value
     if (!route.match(/:[^/]+/g)) return linkRoutes.set(route, {callback: callback, historyOpt: historyOpt});
@@ -120,12 +122,10 @@ var app = app || {};
     //if it doesn't invoke the callback for that route
     window.addEventListener('load', function(e) {
       let referrerRoute = e.target.location.pathname;
-      if( e.target.referrer ){
-        referrerRoute = e.target.referrer.replace(e.target.baseURI, '/');
-      }
-      if(hasRoute(referrerRoute) && referrerRoute !== '/'){
-        return linkRoute(referrerRoute);
-      }
+      //if the page was called from the 404 redirect, get the relative path
+      if( e.target.referrer ) referrerRoute = e.target.referrer.replace(e.target.baseURI, '/');
+      //if the relative path is not the home path, and is a saved route, then invoke the callback
+      if(hasRoute(referrerRoute) && referrerRoute !== '/') return linkRoute(referrerRoute);
       //if the path is not the home path or a path saved as a route, then redirect to the home
       let url = base ? `${base}/` : '/';
       if(e.target.location.pathname !== '/') return history.pushState( {}, null, url);
